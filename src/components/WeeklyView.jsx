@@ -61,32 +61,8 @@ export default function WeeklyView({ getEntry, onDayClick }) {
         className="relative rounded-2xl overflow-hidden"
         style={{ boxShadow: '4px 8px 28px rgba(93,64,55,0.18)' }}
       >
-        {/* Spine */}
-        <div
-          className="absolute left-0 top-0 bottom-0 flex flex-col items-center justify-around py-3"
-          style={{
-            width: '28px',
-            background: 'linear-gradient(to right, #d4a76a, #e8c99a)',
-            boxShadow: 'inset -2px 0 4px rgba(93,64,55,0.12)',
-            zIndex: 10,
-          }}
-        >
-          {Array.from({ length: 9 }).map((_, i) => (
-            <div
-              key={i}
-              style={{
-                width: '13px', height: '13px',
-                borderRadius: '50%',
-                border: '1.5px solid #b8834a',
-                background: '#fdfaf5',
-                boxShadow: 'inset 0 1px 2px rgba(93,64,55,0.18)',
-              }}
-            />
-          ))}
-        </div>
-
         {/* Page */}
-        <div style={{ paddingLeft: '30px', background: '#fdfaf5' }}>
+        <div style={{ background: '#fdfaf5' }}>
 
           {/* Week nav */}
           <div
