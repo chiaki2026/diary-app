@@ -6,7 +6,7 @@ export default defineConfig(({ command }) => ({
   plugins: command === 'build'
     ? [react(), viteSingleFile()]
     : [react()],
-  base: command === 'build' ? './' : '/',
+  base: command === 'build' ? '/diary-app/' : '/',
   build: {
     assetsInlineLimit: 100000000,
     cssCodeSplit: false,
