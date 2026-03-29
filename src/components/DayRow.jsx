@@ -19,7 +19,8 @@ export default function DayRow({ date, entry, isToday, onClick, index }) {
       style={{
         display: 'flex',
         alignItems: 'stretch',
-        minHeight: '60px',
+        flex: 1,
+        minHeight: '52px',
         borderBottom: '1px solid rgba(212,167,106,0.28)',
         cursor: 'pointer',
         position: 'relative',

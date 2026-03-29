@@ -35,11 +35,6 @@ export default function WeeklyView({ getEntry, onDayClick }) {
     const d = new Date(weekStart); d.setDate(d.getDate() - 7);
     setDir('prev'); setKey(k => k + 1); setWeekStart(d);
   };
-  const goToday = () => {
-    const t = getWeekStart(new Date());
-    setDir(t > weekStart ? 'next' : 'prev');
-    setKey(k => k + 1); setWeekStart(t);
-  };
 
   /* Swipe support */
   const handleTouchStart = (e) => { touchStartX.current = e.touches[0].clientX; };
@@ -53,16 +48,19 @@ export default function WeeklyView({ getEntry, onDayClick }) {
   const v = variants[dir];
 
   return (
-    <div className="w-full max-w-lg mx-auto" style={{ perspective: '1400px' }}>
+    <div style={{ flex: 1, display: 'flex', flexDirection: 'column', perspective: '1400px' }}>
 
-      {/* Title row */}
       {/* Notebook card */}
       <div
-        className="relative rounded-2xl overflow-hidden"
-        style={{ boxShadow: '4px 8px 28px rgba(93,64,55,0.18)' }}
+        style={{
+          flex: 1, display: 'flex', flexDirection: 'column',
+          borderRadius: '16px', overflow: 'hidden',
+          boxShadow: '4px 8px 28px rgba(93,64,55,0.18)',
+          marginTop: '10px', marginBottom: '10px',
+        }}
       >
         {/* Page */}
-        <div style={{ background: '#fdfaf5' }}>
+        <div style={{ flex: 1, display: 'flex', flexDirection: 'column', background: '#fdfaf5' }}>
 
           {/* Week nav */}
           <div
@@ -70,6 +68,7 @@ export default function WeeklyView({ getEntry, onDayClick }) {
               display: 'flex', flexDirection: 'row', alignItems: 'center',
               justifyContent: 'space-between', flexWrap: 'nowrap',
               padding: '4px 12px', borderBottom: '1.5px solid rgba(212,167,106,0.4)',
+              flexShrink: 0,
             }}
           >
             <button
@@ -116,7 +115,7 @@ export default function WeeklyView({ getEntry, onDayClick }) {
             className="swipe-zone"
             onTouchStart={handleTouchStart}
             onTouchEnd={handleTouchEnd}
-            style={{ overflowX: 'hidden' }}
+            style={{ flex: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden' }}
           >
             <AnimatePresence mode="wait" initial={false}>
               <motion.div
@@ -125,7 +124,7 @@ export default function WeeklyView({ getEntry, onDayClick }) {
                 animate={v.animate}
                 exit={v.exit}
                 transition={{ type: 'spring', stiffness: 220, damping: 26, mass: 0.7 }}
-                style={{ transformPerspective: 1400, transformOrigin: 'center center' }}
+                style={{ transformPerspective: 1400, transformOrigin: 'center center', display: 'flex', flexDirection: 'column', flex: 1 }}
               >
                 {weekDays.map((day, i) => {
                   const dk = formatDateKey(day);
@@ -144,16 +143,6 @@ export default function WeeklyView({ getEntry, onDayClick }) {
             </AnimatePresence>
           </div>
 
-          {/* Footer hint */}
-          <div
-            className="flex items-center justify-between px-3 py-2"
-            style={{ borderTop: '1px solid rgba(212,167,106,0.2)' }}
-          >
-            <span style={{ fontSize: '11px', color: '#b8834a', opacity: 0.7 }}>
-              タップして日記を書こう 🍯
-            </span>
-            <span style={{ fontSize: '14px' }}>🐾</span>
-          </div>
         </div>
       </div>
     </div>

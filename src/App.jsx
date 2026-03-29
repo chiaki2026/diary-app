@@ -29,14 +29,17 @@ export default function App() {
 
   return (
     <div
-      className="paper-bg relative flex flex-col"
+      className="paper-bg relative"
       style={{
-        minHeight: '100dvh',
+        height: '100dvh',
+        display: 'flex',
+        flexDirection: 'column',
         fontFamily: '"Hiragino Maru Gothic Pro", "M PLUS Rounded 1c", sans-serif',
         paddingTop: 'env(safe-area-inset-top)',
         paddingBottom: 'env(safe-area-inset-bottom)',
         paddingLeft: 'env(safe-area-inset-left)',
         paddingRight: 'env(safe-area-inset-right)',
+        overflow: 'hidden',
       }}
     >
       {/* Top accent stripe */}
@@ -47,7 +50,7 @@ export default function App() {
       }} />
 
       {/* Main */}
-      <main className="flex-1 overflow-y-auto" style={{ padding: '0 16px 100px' }}>
+      <main style={{ flex: 1, display: 'flex', flexDirection: 'column', padding: '0 12px', overflow: 'hidden' }}>
         <WeeklyView diary={diary} getEntry={getEntry} onDayClick={setSelectedDate} />
       </main>
 
