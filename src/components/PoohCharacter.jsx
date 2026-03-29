@@ -31,7 +31,7 @@ export default function PoohCharacter({ onClick }) {
         }}
       >
         <img
-          src="/pooh.png"
+          src={`${import.meta.env.BASE_URL}pooh.png`}
           alt="プー"
           style={{
             width: '72px',

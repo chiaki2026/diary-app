@@ -1,8 +1,8 @@
 {
-  "name": "ニャンスキーの日記帳",
+  "name": "日記帳",
   "short_name": "日記帳",
-  "description": "ニャンスキーと一緒に毎日の日記をつけよう",
-  "start_url": "/",
+  "description": "プーと一緒に毎日の日記をつけよう",
+  "start_url": "/diary-app/",
   "display": "standalone",
   "background_color": "#fdfaf5",
   "theme_color": "#e8953a",
@@ -11,19 +11,19 @@
   "categories": ["lifestyle", "productivity"],
   "icons": [
     {
-      "src": "/icon-192.png",
+      "src": "/diary-app/icon-192.png",
       "sizes": "192x192",
       "type": "image/png",
       "purpose": "any"
     },
     {
-      "src": "/icon-512.png",
+      "src": "/diary-app/icon-512.png",
       "sizes": "512x512",
       "type": "image/png",
       "purpose": "any"
     },
     {
-      "src": "/icon-maskable.png",
+      "src": "/diary-app/icon-maskable.png",
       "sizes": "512x512",
       "type": "image/png",
       "purpose": "maskable"
