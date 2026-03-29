@@ -1,0 +1,115 @@
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* ============ Reset ============ */
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+/* ============ Safe-area / PWA ============ */
+:root {
+  --sat: env(safe-area-inset-top, 0px);
+  --sar: env(safe-area-inset-right, 0px);
+  --sab: env(safe-area-inset-bottom, 0px);
+  --sal: env(safe-area-inset-left, 0px);
+}
+
+html, body, #root {
+  height: 100%;
+  /* Prevent bounce scroll that feels wrong in standalone mode */
+  overscroll-behavior: none;
+}
+
+body {
+  background: #fdfaf5;
+  font-family: 'Hiragino Maru Gothic Pro', 'Rounded Mgen+ 1c', 'M PLUS Rounded 1c', sans-serif;
+  color: #5d4037;
+  /* Prevent iOS text size adjust */
+  -webkit-text-size-adjust: 100%;
+  text-size-adjust: 100%;
+}
+
+/* ============ Paper texture ============ */
+.paper-bg {
+  background-color: #fdfaf5;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='200' height='200'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3CfeColorMatrix type='saturate' values='0'/%3E%3C/filter%3E%3Crect width='200' height='200' filter='url(%23n)' opacity='0.03'/%3E%3C/svg%3E");
+}
+
+/* ============ Lined paper ============ */
+.lined-paper {
+  background-image: repeating-linear-gradient(
+    transparent,
+    transparent 31px,
+    rgba(212,167,106,0.28) 31px,
+    rgba(212,167,106,0.28) 32px
+  );
+  background-attachment: local;
+  line-height: 32px;
+}
+
+/* ============ Scrollbar ============ */
+::-webkit-scrollbar { width: 4px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: #d4a76a80; border-radius: 4px; }
+
+/* ============ Textarea ============ */
+textarea {
+  resize: none;
+  outline: none;
+  background: transparent;
+  width: 100%;
+  font-family: 'Hiragino Maru Gothic Pro', 'Rounded Mgen+ 1c', 'M PLUS Rounded 1c', sans-serif;
+  color: #5d4037;
+  /* Prevent iOS zoom on focus */
+  font-size: 16px !important;
+}
+
+/* ============ Emoji option ============ */
+.emoji-opt {
+  cursor: pointer;
+  border-radius: 8px;
+  padding: 3px 5px;
+  border: 1.5px solid transparent;
+  transition: transform 0.12s ease, background 0.12s ease;
+  /* Ensure 44px touch target area */
+  min-width: 40px;
+  min-height: 40px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+.emoji-opt:active { transform: scale(0.9); }
+.emoji-opt.selected {
+  background: rgba(212,167,106,0.35);
+  border-color: rgba(184,131,74,0.5);
+  transform: scale(1.1);
+}
+
+/* ============ Cat animations ============ */
+@keyframes cat-idle {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-5px); }
+}
+@keyframes tail-wag {
+  0%, 100% { transform: rotate(-8deg); }
+  50% { transform: rotate(12deg); }
+}
+@keyframes blink {
+  0%, 94%, 100% { transform: scaleY(1); }
+  97% { transform: scaleY(0.08); }
+}
+.cat-float { animation: cat-idle 3s ease-in-out infinite; }
+.cat-tail  { transform-origin: 0% 0%; animation: tail-wag 1.6s ease-in-out infinite; }
+.cat-eye   { animation: blink 5s ease-in-out infinite; }
+
+/* ============ Button paw press ============ */
+.paw-btn:active { transform: scale(0.93); }
+
+/* ============ Tap highlight ============ */
+* { -webkit-tap-highlight-color: transparent; }
+
+/* ============ No select on interactive chrome ============ */
+button, a { user-select: none; }
+
+/* ============ Swipe hint ============ */
+.swipe-zone { touch-action: pan-y; }
