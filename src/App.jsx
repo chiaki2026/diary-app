@@ -1,10 +1,13 @@
-import React, { useState } from 'react';
+import React, { useState, useRef, useCallback } from 'react';
 import { AnimatePresence, motion } from 'framer-motion';
 import WeeklyView from './components/WeeklyView';
 import DayDetail from './components/DayDetail';
 import PoohCharacter from './components/PoohCharacter';
 import { useDiary } from './hooks/useDiary';
 import { formatDateKey } from './utils/dateUtils';
+
+// ページをめくる音 (外部 mp3)
+const PAGE_TURN_SFX = 'https://assets.mixkit.co/active_storage/sfx/2571/2571-preview.mp3';
 
 const POOH_MESSAGES = [
   'おなかがすいたな... でも日記も書こう🍯',
@@ -18,8 +21,34 @@ const POOH_MESSAGES = [
 
 export default function App() {
   const { diary, getEntry, setEntry } = useDiary();
-  const [selectedDate, setSelectedDate] = useState(null);
-  const [poohMessage, setPoohMessage] = useState('');
+  const [selectedDate, setSelectedDate]     = useState(null);
+  const [poohMessage, setPoohMessage]       = useState('');
+  const [audioUnlocked, setAudioUnlocked]   = useState(false);
+  const audioRef = useRef(null);
+
+  /* ── Audio unlock (requires user gesture) ── */
+  const unlockAudio = useCallback(() => {
+    if (audioUnlocked) return;
+    const audio = new Audio(PAGE_TURN_SFX);
+    audio.volume = 0.55;
+    audio.play()
+      .then(() => {
+        audio.pause();
+        audio.currentTime = 0;
+        audioRef.current = audio;
+        setAudioUnlocked(true);
+        console.log('🔊 音が有効になりました');
+      })
+      .catch(e => console.error('音の有効化に失敗しました:', e));
+  }, [audioUnlocked]);
+
+  /* ── Play page-turn sound ── */
+  const playPageTurn = useCallback(() => {
+    if (!audioUnlocked || !audioRef.current) return;
+    console.log('音を再生します');
+    audioRef.current.currentTime = 0;
+    audioRef.current.play().catch(e => console.error('再生エラー:', e));
+  }, [audioUnlocked]);
 
   const handlePoohClick = () => {
     const msg = POOH_MESSAGES[Math.floor(Math.random() * POOH_MESSAGES.length)];
@@ -51,7 +80,12 @@ export default function App() {
 
       {/* Main */}
       <main style={{ flex: 1, display: 'flex', flexDirection: 'column', padding: '0 12px', overflow: 'hidden' }}>
-        <WeeklyView diary={diary} getEntry={getEntry} onDayClick={setSelectedDate} />
+        <WeeklyView
+          diary={diary}
+          getEntry={getEntry}
+          onDayClick={setSelectedDate}
+          onPageTurn={playPageTurn}
+        />
       </main>
 
       {/* Bottom accent stripe */}
@@ -99,6 +133,43 @@ export default function App() {
           >
             {poohMessage}
           </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* 🍯 音を有効にするボタン (未解除時のみ表示) */}
+      <AnimatePresence>
+        {!audioUnlocked && (
+          <motion.button
+            key="audio-unlock"
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: 20 }}
+            transition={{ delay: 0.8, duration: 0.4 }}
+            onClick={unlockAudio}
+            style={{
+              position: 'fixed',
+              bottom: 'calc(96px + env(safe-area-inset-bottom))',
+              left: '50%',
+              transform: 'translateX(-50%)',
+              zIndex: 60,
+              display: 'flex',
+              alignItems: 'center',
+              gap: '6px',
+              padding: '10px 20px',
+              borderRadius: '999px',
+              background: '#e8953a',
+              color: 'white',
+              fontSize: '14px',
+              fontWeight: 600,
+              fontFamily: '"Hiragino Maru Gothic Pro", "M PLUS Rounded 1c", sans-serif',
+              border: 'none',
+              cursor: 'pointer',
+              boxShadow: '0 4px 16px rgba(232,149,58,0.45)',
+              whiteSpace: 'nowrap',
+            }}
+          >
+            🍯 音をONにする
+          </motion.button>
         )}
       </AnimatePresence>
 

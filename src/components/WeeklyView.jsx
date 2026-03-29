@@ -6,57 +6,66 @@ import {
   getWeekStart, getWeekDays, formatDateKey, formatWeekRange, isToday,
 } from '../utils/dateUtils';
 
-// Direction-aware variants using custom prop
+/*
+ * mode="wait" → exit が完全に終わってから enter が始まる
+ * → 「パタン」とめくれる 2 フェーズが明確に見える
+ *
+ * perspective: 600px (小さいほど遠近感が強くなる)
+ * rotateY ±90° → ページが真横を向いてから入れ替わる
+ * opacity は 0.7 (透明にしすぎず回転を見せる)
+ */
 const pageVariants = {
   initial: (dir) => ({
-    rotateY: dir === 'next' ? 72 : -72,
-    opacity: 0,
-    scale: 0.96,
-    x: dir === 'next' ? 16 : -16,
+    rotateY: dir === 'next' ? 90 : -90,
+    opacity: 0.7,
   }),
   animate: {
     rotateY: 0,
     opacity: 1,
-    scale: 1,
-    x: 0,
     transition: {
-      rotateY: { duration: 0.6, ease: [0.23, 1, 0.32, 1] },   // easeOutExpo — paper settles gently
+      rotateY: { duration: 0.52, ease: [0.215, 0.61, 0.355, 1] }, // easeOutCubic — やわらかく着地
       opacity:  { duration: 0.25 },
-      scale:    { duration: 0.6, ease: [0.23, 1, 0.32, 1] },
-      x:        { duration: 0.5, ease: [0.23, 1, 0.32, 1] },
     },
   },
   exit: (dir) => ({
-    rotateY: dir === 'next' ? -72 : 72,
-    opacity: 0,
-    scale: 0.96,
-    x: dir === 'next' ? -16 : 16,
+    rotateY: dir === 'next' ? -90 : 90,
+    opacity: 0.7,
     transition: {
-      rotateY: { duration: 0.38, ease: [0.4, 0, 0.9, 0.6] },  // resists at first, then snaps
-      opacity:  { duration: 0.22, delay: 0.1 },
-      scale:    { duration: 0.38 },
-      x:        { duration: 0.35 },
+      rotateY: { duration: 0.38, ease: [0.55, 0.055, 0.675, 0.19] }, // easeInCubic — 最初重く後半スナップ
+      opacity:  { duration: 0.22, delay: 0.12 },
     },
   }),
 };
 
-export default function WeeklyView({ getEntry, onDayClick }) {
+export default function WeeklyView({ getEntry, onDayClick, onPageTurn }) {
   const [weekStart, setWeekStart] = useState(() => getWeekStart(new Date()));
   const [dir, setDir]             = useState('next');
   const [key, setKey]             = useState(0);
-  const [navHover, setNavHover]   = useState(null); // 'next' | 'prev' | null
+  const [flipping, setFlipping]   = useState(false);
+  const [navHover, setNavHover]   = useState(null);
   const touchStartX               = useRef(null);
+  const flipTimer                 = useRef(null);
 
   const weekDays = getWeekDays(weekStart);
 
-  const goNext = () => {
+  // ── 共通ナビ処理 ──
+  const navigate = (fn) => {
+    if (flipTimer.current) clearTimeout(flipTimer.current);
+    setFlipping(true);
+    fn();
+    onPageTurn?.();
+    // exit (0.38s + 0.12s delay) + enter (0.52s) ≈ 1.0s
+    flipTimer.current = setTimeout(() => setFlipping(false), 1050);
+  };
+
+  const goNext = () => navigate(() => {
     const d = new Date(weekStart); d.setDate(d.getDate() + 7);
     setDir('next'); setKey(k => k + 1); setWeekStart(d);
-  };
-  const goPrev = () => {
+  });
+  const goPrev = () => navigate(() => {
     const d = new Date(weekStart); d.setDate(d.getDate() - 7);
     setDir('prev'); setKey(k => k + 1); setWeekStart(d);
-  };
+  });
 
   const handleTouchStart = (e) => { touchStartX.current = e.touches[0].clientX; };
   const handleTouchEnd   = (e) => {
@@ -67,21 +76,27 @@ export default function WeeklyView({ getEntry, onDayClick }) {
   };
 
   return (
-    <div style={{ flex: 1, display: 'flex', flexDirection: 'column', perspective: '1200px' }}>
-
+    <div
+      style={{
+        flex: 1, display: 'flex', flexDirection: 'column',
+        /* ↓ 遠近感: 600px は画面の幅程度 → 3D が強調される */
+        perspective: '600px',
+        perspectiveOrigin: 'center 40%',
+      }}
+    >
       {/* Notebook card */}
       <div
         style={{
           flex: 1, display: 'flex', flexDirection: 'column',
           borderRadius: '16px',
-          boxShadow: '4px 8px 32px rgba(93,64,55,0.20), 0 1px 0 rgba(212,167,106,0.4)',
+          boxShadow: '4px 8px 32px rgba(93,64,55,0.22), 0 1px 0 rgba(212,167,106,0.4)',
           marginTop: '10px', marginBottom: '10px',
           background: '#fdfaf5',
           position: 'relative',
           overflow: 'hidden',
         }}
       >
-        {/* ── Week nav (stays fixed, does NOT flip) ── */}
+        {/* ── 週ナビ (フリップしない) ── */}
         <div
           style={{
             display: 'flex', flexDirection: 'row', alignItems: 'center',
@@ -89,16 +104,14 @@ export default function WeeklyView({ getEntry, onDayClick }) {
             padding: '4px 12px',
             borderBottom: '1.5px solid rgba(212,167,106,0.4)',
             background: '#fdfaf5',
-            flexShrink: 0,
-            position: 'relative', zIndex: 10,
+            flexShrink: 0, position: 'relative', zIndex: 10,
           }}
         >
-          {/* 前週 button */}
           <motion.button
             onClick={goPrev}
             onHoverStart={() => setNavHover('prev')}
             onHoverEnd={() => setNavHover(null)}
-            whileTap={{ scale: 0.9 }}
+            whileTap={{ scale: 0.88 }}
             style={{
               display: 'inline-flex', alignItems: 'center', gap: '2px',
               fontSize: '13px', color: '#8d6035', whiteSpace: 'nowrap',
@@ -114,12 +127,11 @@ export default function WeeklyView({ getEntry, onDayClick }) {
             {formatWeekRange(weekStart)}
           </div>
 
-          {/* 次週 button */}
           <motion.button
             onClick={goNext}
             onHoverStart={() => setNavHover('next')}
             onHoverEnd={() => setNavHover(null)}
-            whileTap={{ scale: 0.9 }}
+            whileTap={{ scale: 0.88 }}
             style={{
               display: 'inline-flex', alignItems: 'center', gap: '2px',
               fontSize: '13px', color: '#8d6035', whiteSpace: 'nowrap',
@@ -132,14 +144,17 @@ export default function WeeklyView({ getEntry, onDayClick }) {
           </motion.button>
         </div>
 
-        {/* ── 3-D flip stage ── */}
+        {/* ── 3-D フリップステージ ── */}
         <div
-          style={{ flex: 1, position: 'relative', transformStyle: 'preserve-3d' }}
+          style={{ flex: 1, position: 'relative' }}
           onTouchStart={handleTouchStart}
           onTouchEnd={handleTouchEnd}
         >
-          {/* Concurrent flip: old exits while new enters */}
-          <AnimatePresence custom={dir} initial={false}>
+          {/*
+           * mode="wait" → exit が終わってから next の initial → animate が走る
+           * これにより「パタン」の 2 フェーズが視覚的に明確になる
+           */}
+          <AnimatePresence mode="wait" custom={dir} initial={false}>
             <motion.div
               key={key}
               custom={dir}
@@ -151,14 +166,16 @@ export default function WeeklyView({ getEntry, onDayClick }) {
                 position: 'absolute', inset: 0,
                 display: 'flex', flexDirection: 'column',
                 background: '#fdfaf5',
-                transformOrigin: 'center center',
+                /* transformOrigin を左 or 右に寄せるとより「本」らしくなる */
+                transformOrigin: dir === 'next' ? 'left center' : 'right center',
+                /* ↓ 子要素まで 3D を継承 */
                 transformStyle: 'preserve-3d',
               }}
             >
               {/* Day rows */}
               {weekDays.map((day, i) => (
                 <DayRow
-                  key={formatDateKey(day)}
+                  key={`${weekStart.getTime()}-${formatDateKey(day)}`}
                   date={day}
                   entry={getEntry(formatDateKey(day))}
                   isToday={isToday(day)}
@@ -167,66 +184,59 @@ export default function WeeklyView({ getEntry, onDayClick }) {
                 />
               ))}
 
-              {/* Paper-edge depth shadow (spine side) */}
+              {/* ページ裏面の影 (回転中にページ端が暗くなる) */}
               <div
                 aria-hidden="true"
                 style={{
                   position: 'absolute', inset: 0, pointerEvents: 'none',
                   background:
-                    'linear-gradient(to right, rgba(93,64,55,0.07) 0%, transparent 6%, transparent 94%, rgba(93,64,55,0.05) 100%)',
-                }}
-              />
-
-              {/* Back-face tint (visible mid-rotation via preserve-3d) */}
-              <div
-                aria-hidden="true"
-                style={{
-                  position: 'absolute', inset: 0, pointerEvents: 'none',
-                  backfaceVisibility: 'hidden',
-                  background: 'linear-gradient(135deg, #f0e3c0 0%, #e8d5a8 100%)',
-                  transform: 'rotateY(180deg)',
-                  borderRadius: 'inherit',
+                    dir === 'next'
+                      ? 'linear-gradient(to left,  rgba(93,64,55,0.18) 0%, transparent 30%)'
+                      : 'linear-gradient(to right, rgba(93,64,55,0.18) 0%, transparent 30%)',
                 }}
               />
             </motion.div>
           </AnimatePresence>
 
-          {/* ── Corner curl — left (前週 hover) ── */}
+          {/* ── フリップ中の折り目シャドウ ──
+               ページがめくれているときだけ中央に暗い線が走る */}
           <AnimatePresence>
-            {navHover === 'prev' && (
+            {flipping && (
               <motion.div
-                key="curl-left"
-                initial={{ width: 0, height: 0, opacity: 0 }}
-                animate={{ width: 30, height: 30, opacity: 1 }}
-                exit={{ width: 0, height: 0, opacity: 0 }}
-                transition={{ duration: 0.22, ease: 'easeOut' }}
+                key="fold-shadow"
+                initial={{ opacity: 0 }}
+                animate={{ opacity: [0, 0.5, 0] }}
+                exit={{ opacity: 0 }}
+                transition={{ duration: 0.9, times: [0, 0.4, 1], ease: 'easeInOut' }}
                 style={{
-                  position: 'absolute', bottom: 0, left: 0, zIndex: 20,
-                  pointerEvents: 'none',
-                  background: 'linear-gradient(135deg, #c8994a 50%, transparent 50%)',
-                  transformOrigin: 'bottom left',
-                  boxShadow: '2px -2px 5px rgba(93,64,55,0.18)',
+                  position: 'absolute', inset: 0, zIndex: 30, pointerEvents: 'none',
+                  background:
+                    'radial-gradient(ellipse 12% 100% at 50% 50%, rgba(93,64,55,0.35) 0%, transparent 100%)',
                 }}
               />
             )}
           </AnimatePresence>
 
-          {/* ── Corner curl — right (次週 hover) ── */}
+          {/* ── コーナーカール (ホバー時) ── */}
+          <AnimatePresence>
+            {navHover === 'prev' && (
+              <motion.div key="curl-l"
+                initial={{ width: 0, height: 0 }} animate={{ width: 32, height: 32 }} exit={{ width: 0, height: 0 }}
+                transition={{ duration: 0.2 }}
+                style={{ position: 'absolute', bottom: 0, left: 0, zIndex: 20, pointerEvents: 'none',
+                  background: 'linear-gradient(135deg, #c8994a 50%, transparent 50%)',
+                  boxShadow: '3px -3px 6px rgba(93,64,55,0.2)' }}
+              />
+            )}
+          </AnimatePresence>
           <AnimatePresence>
             {navHover === 'next' && (
-              <motion.div
-                key="curl-right"
-                initial={{ width: 0, height: 0, opacity: 0 }}
-                animate={{ width: 30, height: 30, opacity: 1 }}
-                exit={{ width: 0, height: 0, opacity: 0 }}
-                transition={{ duration: 0.22, ease: 'easeOut' }}
-                style={{
-                  position: 'absolute', bottom: 0, right: 0, zIndex: 20,
-                  pointerEvents: 'none',
+              <motion.div key="curl-r"
+                initial={{ width: 0, height: 0 }} animate={{ width: 32, height: 32 }} exit={{ width: 0, height: 0 }}
+                transition={{ duration: 0.2 }}
+                style={{ position: 'absolute', bottom: 0, right: 0, zIndex: 20, pointerEvents: 'none',
                   background: 'linear-gradient(225deg, #c8994a 50%, transparent 50%)',
-                  transformOrigin: 'bottom right',
-                  boxShadow: '-2px -2px 5px rgba(93,64,55,0.18)',
-                }}
+                  boxShadow: '-3px -3px 6px rgba(93,64,55,0.2)' }}
               />
             )}
           </AnimatePresence>
